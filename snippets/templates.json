@@ -1,0 +1,216 @@
+{
+  "emmp-permit": {
+    "prefix": "emmp-permit",
+    "body": [
+      "permit(",
+      "  principal is ${1:EmmpUser},",
+      "  action == ${2:Action::\"mcp:tools/call\"},",
+      "  resource == ${3:MCPTool::\"read_file\"}",
+      ")${4: when {",
+      "  ${5:context.condition}",
+      "\\}};",
+      "$0"
+    ],
+    "description": "Emmp: Cedar permit statement"
+  },
+  "emmp-forbid": {
+    "prefix": "emmp-forbid",
+    "body": [
+      "forbid(",
+      "  principal,",
+      "  action,",
+      "  resource",
+      ") when {",
+      "  ${1:condition}",
+      "};",
+      "$0"
+    ],
+    "description": "Emmp: Cedar forbid statement"
+  },
+  "emmp-restrict-data-class": {
+    "prefix": "emmp-restrict-data-class",
+    "body": [
+      "forbid(",
+      "  principal is ${1:EmmpUser},",
+      "  action,",
+      "  resource",
+      ") when {",
+      "  resource.data_classification != \"${2:confidential}\"",
+      "  && resource.data_classification_level > context.allowed_level",
+      "};",
+      "$0"
+    ],
+    "description": "Emmp: Restrict by data classification level"
+  },
+  "emmp-encrypt-at-rest": {
+    "prefix": "emmp-encrypt-at-rest",
+    "body": [
+      "forbid(",
+      "  principal,",
+      "  action in [Action::\"${1:mcp:tools/store}\", Action::\"${2:mcp:tools/write}\"],",
+      "  resource",
+      ") when {",
+      "  !resource.encrypted_at_rest",
+      "};",
+      "$0"
+    ],
+    "description": "Emmp: Require encryption at rest"
+  },
+  "emmp-pii-redaction": {
+    "prefix": "emmp-pii-redaction",
+    "body": [
+      "forbid(",
+      "  principal,",
+      "  action in [Action::\"mcp:tools/call\", Action::\"mcp:resources/read\"],",
+      "  resource",
+      ") when {",
+      "  resource.contains_pii",
+      "  && resource.pii_type in [\"${1:ssn}\", \"${2:email}\"]",
+      "  && !context.redaction_enabled",
+      "};",
+      "$0"
+    ],
+    "description": "Emmp: PII redaction required"
+  },
+  "emmp-business-hours": {
+    "prefix": "emmp-business-hours",
+    "body": [
+      "forbid(",
+      "  principal,",
+      "  action,",
+      "  resource",
+      ") when {",
+      "  context.hour_utc < ${1:8} || context.hour_utc >= ${2:18}",
+      "};",
+      "$0"
+    ],
+    "description": "Emmp: Business hours only"
+  },
+  "emmp-geo-fence": {
+    "prefix": "emmp-geo-fence",
+    "body": [
+      "forbid(",
+      "  principal,",
+      "  action,",
+      "  resource",
+      ") when {",
+      "  !(context.source_region in [\"${1:US}\", \"${2:CA}\"])",
+      "};",
+      "$0"
+    ],
+    "description": "Emmp: Geographic fence"
+  },
+  "emmp-ip-allowlist": {
+    "prefix": "emmp-ip-allowlist",
+    "body": [
+      "forbid(",
+      "  principal,",
+      "  action,",
+      "  resource",
+      ") when {",
+      "  !(context.source_ip in [\"${1:10.0.0.0/8}\", \"${2:192.168.1.0/24}\"])",
+      "};",
+      "$0"
+    ],
+    "description": "Emmp: IP allowlist"
+  },
+  "emmp-tool-scope-limit": {
+    "prefix": "emmp-tool-scope-limit",
+    "body": [
+      "forbid(",
+      "  principal,",
+      "  action in [Action::\"mcp:tools/call\"],",
+      "  resource",
+      ") unless {",
+      "  resource in [MCPTool::\"${1:tool://read_file}\", MCPTool::\"${2:tool://list_dir}\"]",
+      "};",
+      "$0"
+    ],
+    "description": "Emmp: Tool scope limit"
+  },
+  "emmp-max-token-budget": {
+    "prefix": "emmp-max-token-budget",
+    "body": [
+      "forbid(",
+      "  principal,",
+      "  action,",
+      "  resource",
+      ") when {",
+      "  context.token_count > ${1:10000}",
+      "};",
+      "$0"
+    ],
+    "description": "Emmp: Max token budget"
+  },
+  "emmp-session-duration": {
+    "prefix": "emmp-session-duration",
+    "body": [
+      "forbid(",
+      "  principal,",
+      "  action,",
+      "  resource",
+      ") when {",
+      "  context.session_duration_minutes > ${1:60}",
+      "};",
+      "$0"
+    ],
+    "description": "Emmp: Session duration limit"
+  },
+  "emmp-approval-tier": {
+    "prefix": "emmp-approval-tier",
+    "body": [
+      "forbid(",
+      "  principal,",
+      "  action in [Action::\"${1:mcp:admin/delete}\"],",
+      "  resource",
+      ") when {",
+      "  context.approval_tier != \"${2:DUAL_APPROVAL}\"",
+      "};",
+      "$0"
+    ],
+    "description": "Emmp: Require approval tier"
+  },
+  "emmp-audit-trail": {
+    "prefix": "emmp-audit-trail",
+    "body": [
+      "forbid(",
+      "  principal,",
+      "  action,",
+      "  resource",
+      ") when {",
+      "  !context.audit_enabled",
+      "};",
+      "$0"
+    ],
+    "description": "Emmp: Audit trail required"
+  },
+  "emmp-rate-limit": {
+    "prefix": "emmp-rate-limit",
+    "body": [
+      "forbid(",
+      "  principal,",
+      "  action,",
+      "  resource",
+      ") when {",
+      "  context.requests_per_minute > ${1:100}",
+      "};",
+      "$0"
+    ],
+    "description": "Emmp: Rate limit"
+  },
+  "emmp-maintenance-window": {
+    "prefix": "emmp-maintenance-window",
+    "body": [
+      "forbid(",
+      "  principal,",
+      "  action,",
+      "  resource",
+      ") when {",
+      "  context.maintenance_mode",
+      "  && !principal.roles.contains(\"${1:platform_admin}\")",
+      "};",
+      "$0"
+    ],
+    "description": "Emmp: Maintenance window"
+  }
+}

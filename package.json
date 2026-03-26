@@ -1,0 +1,42 @@
+{
+  "name": "emmp-cedar",
+  "displayName": "Emmp Cedar",
+  "description": "Cedar policy language support for the Emmp platform",
+  "version": "0.1.0",
+  "publisher": "emmp-io",
+  "engines": { "vscode": "^1.85.0" },
+  "categories": ["Programming Languages", "Snippets"],
+  "activationEvents": ["onLanguage:cedar", "onLanguage:cedarschema"],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "languages": [
+      { "id": "cedar", "extensions": [".cedar"], "aliases": ["Cedar"] },
+      { "id": "cedarschema", "extensions": [".cedarschema"], "aliases": ["Cedar Schema"] }
+    ],
+    "commands": [
+      { "command": "emmp.connect", "title": "Emmp: Connect to Instance" },
+      { "command": "emmp.simulate", "title": "Emmp: Simulate Policy" },
+      { "command": "emmp.insertTemplate", "title": "Emmp: Insert Policy Template" }
+    ],
+    "configuration": {
+      "title": "Emmp Cedar",
+      "properties": {
+        "emmp.serverUrl": { "type": "string", "description": "Emmp instance URL" },
+        "emmp.tenantId": { "type": "string", "description": "Tenant ID" }
+      }
+    },
+    "snippets": [
+      { "language": "cedar", "path": "./snippets/templates.json" }
+    ]
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "node --experimental-vm-modules node_modules/.bin/vitest run",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "@types/vscode": "^1.85.0",
+    "vitest": "^2.0.0"
+  }
+}
