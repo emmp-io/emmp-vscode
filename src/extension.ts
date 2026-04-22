@@ -55,6 +55,22 @@ export function activate(context: { subscriptions: { dispose(): void }[] } & {
     context.subscriptions.push(diagnosticCollection);
     diagnosticProvider.setCollection(diagnosticCollection);
 
+    // Wire diagnostics to document change events (H4)
+    context.subscriptions.push(
+      vscodeApi.workspace.onDidChangeTextDocument((e) => {
+        if (e.document.languageId === "cedar" && diagnosticProvider) {
+          diagnosticProvider.updateDiagnostics(e.document.uri, e.document.getText());
+        }
+      })
+    );
+    context.subscriptions.push(
+      vscodeApi.workspace.onDidOpenTextDocument((doc) => {
+        if (doc.languageId === "cedar" && diagnosticProvider) {
+          diagnosticProvider.updateDiagnostics(doc.uri, doc.getText());
+        }
+      })
+    );
+
     context.subscriptions.push(
       vscodeApi.commands.registerCommand("emmp.connect", async () => {
         if (!connection) return;

@@ -46,7 +46,7 @@ export async function simulatePolicy(
     throw new Error("Not connected to an Emmp instance");
   }
 
-  const url = `${connection.getServerUrl()}/api/cedar/simulate`;
+  const url = `${connection.getServerUrl()}/api/v1/cedar/simulate`;
   const body: SimulateRequest = {
     policy_text: policyText,
     principal,
@@ -59,6 +59,7 @@ export async function simulatePolicy(
     method: "POST",
     headers: connection.buildHeaders(),
     body: JSON.stringify(body),
+    signal: AbortSignal.timeout(15_000),
   });
 
   if (!response.ok) {

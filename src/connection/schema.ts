@@ -58,11 +58,12 @@ export class SchemaCache {
    * Fetch the Cedar schema from the connected Emmp instance and cache it.
    */
   async fetchSchema(connection: EmmpConnection): Promise<CedarSchema> {
-    const url = `${connection.getServerUrl()}/api/cedar/schema`;
+    const url = `${connection.getServerUrl()}/api/v1/cedar/schema`;
 
     const response = await fetch(url, {
       method: "GET",
       headers: connection.buildHeaders(),
+      signal: AbortSignal.timeout(15_000),
     });
 
     if (!response.ok) {
@@ -71,9 +72,13 @@ export class SchemaCache {
       );
     }
 
-    const data = (await response.json()) as CedarSchema;
-    this.cachedSchema = data;
-    return data;
+    const data = (await response.json()) as unknown;
+    if (!data || typeof data !== "object" || !("entityTypes" in data) || !("actions" in data)) {
+      throw new Error("Invalid Cedar schema response — missing expected fields");
+    }
+    const schema = data as CedarSchema;
+    this.cachedSchema = schema;
+    return schema;
   }
 
   /**

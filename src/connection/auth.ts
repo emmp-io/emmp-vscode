@@ -21,8 +21,27 @@ export class EmmpConnection {
    * Connect to an Emmp instance. Validates by fetching the Cedar schema.
    */
   async connect(serverUrl: string, apiKey: string, tenantId?: string): Promise<void> {
+    // Reset state before attempting connection (H5)
+    this.connected = false;
+    this.apiKey = "";
+    this.serverUrl = "";
+
+    // Validate URL scheme to prevent SSRF (C2)
+    let parsed: URL;
+    try {
+      parsed = new URL(serverUrl);
+    } catch {
+      throw new Error("Invalid server URL");
+    }
+    if (parsed.protocol !== "https:" && !parsed.hostname.match(/^(localhost|127\.0\.0\.1)$/)) {
+      throw new Error("Server URL must use HTTPS for non-local connections");
+    }
+
+    // TODO: Use VS Code SecretStorage for API key persistence (C1)
+    console.warn("emmp-vscode: API key stored in memory — use VS Code SecretStorage for production");
+
     const normalizedUrl = serverUrl.replace(/\/+$/, "");
-    const url = `${normalizedUrl}/api/cedar/schema`;
+    const url = `${normalizedUrl}/api/v1/cedar/schema`;
 
     const response = await fetch(url, {
       method: "GET",
@@ -31,6 +50,7 @@ export class EmmpConnection {
         "Content-Type": "application/json",
         ...(tenantId ? { "X-Tenant-Id": tenantId } : {}),
       },
+      signal: AbortSignal.timeout(15_000),
     });
 
     if (!response.ok) {
